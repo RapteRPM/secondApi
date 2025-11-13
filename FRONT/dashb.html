@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Productos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+       
+    </style>
+</head>
+<body class="crud-page">
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-custom navbar-dark p-3">
+    <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">Dashboard - Productos</span>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <!-- BOTÓN AGREGAR -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold">Productos</h3>
+        <button class="btn btn-main" onclick="mostrarFormulario()">Agregar Producto</button>
+    </div>
+
+    <!-- FORMULARIO -->
+    <div id="formProducto" class="card-producto mb-4 hidden">
+        <h4 id="formTitle">Agregar Producto</h4>
+        <div class="mt-3">
+            <label class="form-label">Nombre del producto</label>
+            <input id="prodNombre" class="form-control" type="text">
+        </div>
+        <button class="btn btn-main mt-3" onclick="guardarProducto()">Guardar</button>
+        <button class="btn btn-secondary mt-3" onclick="cancelarForm()">Cancelar</button>
+    </div>
+
+    <!-- LISTA DE PRODUCTOS COMO TARJETAS -->
+    <div class="row" id="productosGrid">
+        <!-- Contenido dinámico -->
+    </div>
+
+</div>
+
+<script>
+    let productos = [];
+    let editIndex = null;
+
+    function renderProductos() {
+        const grid = document.getElementById("productosGrid");
+        grid.innerHTML = "";
+
+        productos.forEach((p, i) => {
+            grid.innerHTML += `
+                <div class="col-md-4 mb-4">
+                    <div class="card-producto">
+                        <h5>${p.nombre}</h5>
+                        <div class="mt-3 d-flex gap-2">
+                            <button class='btn btn-warning btn-sm' onclick='editarProducto(${i})'>Editar</button>
+                            <button class='btn btn-danger btn-sm' onclick='eliminarProducto(${i})'>Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function mostrarFormulario() {
+        editIndex = null;
+        document.getElementById("formTitle").innerText = "Agregar Producto";
+        document.getElementById("prodNombre").value = "";
+        document.getElementById("formProducto").classList.remove("hidden");
+    }
+
+    function guardarProducto() {
+        const nombre = document.getElementById("prodNombre").value;
+
+        if (editIndex !== null) {
+            productos[editIndex].nombre = nombre;
+        } else {
+            productos.push({ nombre });
+        }
+
+        cancelarForm();
+        renderProductos();
+    }
+
+    function editarProducto(index) {
+        editIndex = index;
+        document.getElementById("formTitle").innerText = "Editar Producto";
+        document.getElementById("prodNombre").value = productos[index].nombre;
+        document.getElementById("formProducto").classList.remove("hidden");
+    }
+
+    function eliminarProducto(index) {
+        productos.splice(index, 1);
+        renderProductos();
+    }
+
+    function cancelarForm() {
+        document.getElementById("formProducto").classList.add("hidden");
+        document.getElementById("prodNombre").value = "";
+        editIndex = null;
+    }
+</script>
+
+</body>
+</html>

@@ -1,16 +1,44 @@
- body {
-            background: #e8edf3;
-        }
-        .card-custom {
-            background: white;
-            border-radius: 18px;
-            padding: 35px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        .hidden { display: none; }
-        .btn-main {
-            background: #0d6efd;
-            color: white;
-            border-radius: 12px;
-        }
-        .btn-main:hover { opacity: .9; }
+/* ==== ESTILO PARA INDEX (Ingreso / Registro) ==== */
+body.index-page {
+    background: #e8edf3;
+}
+
+.card-custom {
+    background: white;
+    border-radius: 18px;
+    padding: 35px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+
+/* ==== ESTILO PARA CRUD DASHBOARD ==== */
+body.crud-page {
+    background: #f0f4fb;
+}
+
+.navbar-custom {
+    background: #0d6efd;
+}
+
+.card-producto {
+    border-radius: 15px;
+    padding: 20px;
+    background: white;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+
+/* ==== ESTILOS COMPARTIDOS ==== */
+.btn-main {
+    background: #0d6efd;
+    color: white;
+    border-radius: 12px;
+}
+
+.btn-main:hover { 
+    opacity: .9; 
+}
+
+.hidden { 
+    display: none; 
+}
