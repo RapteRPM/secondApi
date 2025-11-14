@@ -6,6 +6,7 @@
     <title>Dashboard de Usuarios</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="frontend_integration.js"></script>
 </head>
 <body class="crud-page">
 
@@ -43,43 +44,44 @@
 </div>
 
 <script>
-    // URL del backend
-    const API_URL = "https://curly-parakeet-7v5v4q4x4pw2rgrj-5000.app.github.dev";
-    
-    let usuarios = [];
+    let productos = [];
     let editIndex = null;
 
-    // Cargar usuarios al iniciar
-    async function cargarUsuarios() {
+    // Cargar productos al iniciar
+    async function cargarProductos() {
         try {
-            const response = await fetch(`${API_URL}/usuarios`, {
-                method: 'GET'
-            });
-            
-            if (response.ok) {
-                const data = await response.text();
-                // Convertir la respuesta string a array
-                usuarios = eval(data); // ['Andres', 'Maria']
-                renderUsuarios();
-            }
+            console.log('📦 Cargando productos...');
+            const productos_data = await obtenerProductos();
+            productos = productos_data.data || productos_data || [];
+            renderProductos();
+            console.log('✅ Productos cargados:', productos);
         } catch (error) {
-            console.error('Error al cargar usuarios:', error);
-            alert('Error al conectar con el servidor');
+            console.error('❌ Error al cargar productos:', error);
+            // Si hay error de conexión, mostrar mensaje
+            if (!productos.length) {
+                document.getElementById("productosGrid").innerHTML = '<div class="col-12"><p class="text-danger">⚠️ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://127.0.0.1:5000</p></div>';
+            }
         }
     }
 
-    function renderUsuarios() {
+    function renderProductos() {
         const grid = document.getElementById("productosGrid");
         grid.innerHTML = "";
 
-        usuarios.forEach((usuario, i) => {
+        if (!productos || productos.length === 0) {
+            grid.innerHTML = '<div class="col-12"><p class="text-muted">No hay productos registrados</p></div>';
+            return;
+        }
+
+        productos.forEach((p, i) => {
             grid.innerHTML += `
                 <div class="col-md-4 mb-4">
                     <div class="card-producto">
-                        <h5>${usuario}</h5>
+                        <h5>${p.nombre || 'Sin nombre'}</h5>
+                        <p class="text-muted small">Inventario: ${p.inventario || 0}</p>
                         <div class="mt-3 d-flex gap-2">
-                            <button class='btn btn-warning btn-sm' onclick='editarUsuario(${i})'>Editar</button>
-                            <button class='btn btn-danger btn-sm' onclick='eliminarUsuario(${i})'>Eliminar</button>
+                            <button class='btn btn-warning btn-sm' onclick='editarProducto(${i})'>Editar</button>
+                            <button class='btn btn-danger btn-sm' onclick='eliminarProducto(${i})'>Eliminar</button>
                         </div>
                     </div>
                 </div>
@@ -89,7 +91,7 @@
 
     function mostrarFormulario() {
         editIndex = null;
-        document.getElementById("formTitle").innerText = "Agregar Usuario";
+        document.getElementById("formTitle").innerText = "Agregar Producto";
         document.getElementById("prodNombre").value = "";
         document.getElementById("formProducto").classList.remove("hidden");
     }
@@ -104,60 +106,50 @@
 
         try {
             if (editIndex !== null) {
-                // Actualizar usuario existente
-                const response = await fetch(`${API_URL}/usuarios/${editIndex}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `nombre=${encodeURIComponent(nombre)}`
-                });
-                
-                const data = await response.text();
-                alert(data);
+                // Actualizar producto
+                const productoActual = productos[editIndex];
+                const response = await actualizarProducto(
+                    productoActual.id,
+                    nombre,
+                    productoActual.inventario,
+                    productoActual.categoria_id
+                );
+                alert('✅ Producto actualizado exitosamente');
+                console.log('Producto actualizado:', response);
             } else {
-                // Crear nuevo usuario
-                const response = await fetch(`${API_URL}/usuarios`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: `nombre=${encodeURIComponent(nombre)}`
-                });
-                
-                const data = await response.text();
-                alert(data);
+                // Crear nuevo producto
+                const response = await crearProducto(nombre, 1, 1);
+                alert('✅ Producto creado exitosamente');
+                console.log('Producto creado:', response);
             }
 
             cancelarForm();
-            await cargarUsuarios(); // Recargar la lista
+            await cargarProductos(); // Recargar la lista
         } catch (error) {
             console.error('Error:', error);
-            alert('Error al guardar usuario');
+            alert('❌ Error al guardar producto: ' + error.message);
         }
     }
 
-    function editarUsuario(index) {
+    function editarProducto(index) {
         editIndex = index;
-        document.getElementById("formTitle").innerText = "Editar Usuario";
-        document.getElementById("prodNombre").value = usuarios[index];
+        document.getElementById("formTitle").innerText = "Editar Producto";
+        document.getElementById("prodNombre").value = productos[index].nombre;
         document.getElementById("formProducto").classList.remove("hidden");
     }
 
-    async function eliminarUsuario(index) {
-        if (!confirm(`¿Eliminar usuario ${usuarios[index]}?`)) return;
+    async function eliminarProducto(index) {
+        const producto = productos[index];
+        if (!confirm(`¿Eliminar producto "${producto.nombre}"?`)) return;
         
         try {
-            const response = await fetch(`${API_URL}/usuarios/${index}`, {
-                method: 'DELETE'
-            });
-            
-            const data = await response.text();
-            alert(data);
-            await cargarUsuarios(); // Recargar la lista
+            const response = await eliminarProducto(producto.id);
+            alert('✅ Producto eliminado exitosamente');
+            console.log('Producto eliminado:', response);
+            await cargarProductos(); // Recargar la lista
         } catch (error) {
             console.error('Error:', error);
-            alert('Error al eliminar usuario');
+            alert('❌ Error al eliminar producto: ' + error.message);
         }
     }
 
@@ -167,8 +159,18 @@
         editIndex = null;
     }
 
-    // Cargar usuarios al cargar la página
-    document.addEventListener('DOMContentLoaded', cargarUsuarios);
+    // Verificar conexión y cargar productos al cargar la página
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('🚀 Dashboard cargando...');
+        const conectado = await verificarConexionAPI();
+        if (conectado) {
+            console.log('✅ Conexión verificada');
+            await cargarProductos();
+        } else {
+            console.error('❌ No se pudo conectar a la API');
+            document.getElementById("productosGrid").innerHTML = '<div class="col-12"><p class="text-danger">⚠️ No se puede conectar al servidor. Verifica que el backend esté corriendo.</p></div>';
+        }
+    });
 </script>
 
 </body>
