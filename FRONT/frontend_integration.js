@@ -2,7 +2,7 @@
 
 // Configuración de la API
 const API_CONFIG = {
-    baseURL: 'https://curly-parakeet-7v5v4q4x4pw2rgrj-5000.app.github.dev', // Backend en Codespaces
+    baseURL: 'http://127.0.0.1:5000', // Backend local con CORS configurado
     headers: {
         'Content-Type': 'application/json',
     }
