@@ -28,16 +28,24 @@ async function apiRequest(endpoint, options = {}) {
         headers: { ...defaultHeaders, ...options.headers }
     };
     
+    console.log('📤 Realizando petición:', { url, method: requestOptions.method || 'GET', headers: requestOptions.headers });
+    
     try {
         const response = await fetch(url, requestOptions);
         
+        console.log('📥 Respuesta recibida:', { status: response.status, ok: response.ok });
+        
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error('❌ Error en respuesta:', errorText);
+            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
         }
         
-        return await response.json();
+        const data = await response.json();
+        console.log('✅ Datos JSON:', data);
+        return data;
     } catch (error) {
-        console.error('API Request Error:', error);
+        console.error('❌ API Request Error:', error);
         throw error;
     }
 }
