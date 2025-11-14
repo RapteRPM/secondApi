@@ -1,13 +1,8 @@
-/**
- * GUÍA DE INTEGRACIÓN FRONTEND - API
- * 
- * Usa este código en tu frontend para conectarte a la API.
- * Tu backend ya está configurado con CORS apropiado.
- */
+
 
 // Configuración de la API
 const API_CONFIG = {
-    baseURL: 'http://127.0.0.1:5000', // Backend local - ACTIVO Y FUNCIONANDO
+    baseURL: 'https://curly-parakeet-7v5v4q4x4pw2rgrj-5000.app.github.dev', // Backend en Codespaces
     headers: {
         'Content-Type': 'application/json',
     }
