@@ -59,10 +59,65 @@
 </div>
 
 <script>
+    // URL del backend
+    const API_URL = "https://curly-parakeet-7v5v4q4x4pw2rgrj-5000.app.github.dev";
+
     function toggleForms() {
         document.getElementById("loginForm").classList.toggle("hidden");
         document.getElementById("registroForm").classList.toggle("hidden");
     }
+
+    // Manejo del formulario de registro
+    document.addEventListener('DOMContentLoaded', function() {
+        const registroForm = document.querySelector('#registroForm form');
+        const loginForm = document.querySelector('#loginForm form');
+
+        // Registro de usuario
+        registroForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const nombre = this.querySelector('input[placeholder="Tu nombre"]').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/usuarios`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `nombre=${encodeURIComponent(nombre)}`
+                });
+                
+                const data = await response.text();
+                alert(data);
+                
+                // Limpiar formulario y cambiar a login
+                this.reset();
+                toggleForms();
+            } catch (error) {
+                alert('Error al conectar con el servidor: ' + error.message);
+                console.error('Error:', error);
+            }
+        });
+
+        // Login (simulado - obtiene lista de usuarios)
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const response = await fetch(`${API_URL}/usuarios`, {
+                    method: 'GET'
+                });
+                
+                const usuarios = await response.text();
+                alert('Usuarios registrados: ' + usuarios);
+                
+                // Redirigir al dashboard
+                window.location.href = 'dashb.html';
+            } catch (error) {
+                alert('Error al conectar con el servidor: ' + error.message);
+                console.error('Error:', error);
+            }
+        });
+    });
 </script>
 
 </body>
