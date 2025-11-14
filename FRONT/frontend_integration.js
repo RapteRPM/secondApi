@@ -2,7 +2,7 @@
 
 // Configuración de la API
 const API_CONFIG = {
-    baseURL: 'http://127.0.0.1:5000', // Backend local con CORS configurado
+    baseURL: 'https://apiflask-production.up.railway.app', // Backend en Railway
     headers: {
         'Content-Type': 'application/json',
     }
@@ -10,6 +10,13 @@ const API_CONFIG = {
 
 // Token de autenticación (se guarda después del login)
 let authToken = localStorage.getItem('authToken') || null;
+
+// Debug del token al cargar
+if (authToken) {
+    console.log('🔑 Token encontrado en localStorage:', authToken.substring(0, 20) + '...');
+} else {
+    console.log('⚠️ No hay token en localStorage');
+}
 
 // Función para realizar peticiones HTTP con manejo de CORS
 async function apiRequest(endpoint, options = {}) {
@@ -28,24 +35,42 @@ async function apiRequest(endpoint, options = {}) {
         headers: { ...defaultHeaders, ...options.headers }
     };
     
-    console.log('📤 Realizando petición:', { url, method: requestOptions.method || 'GET', headers: requestOptions.headers });
+    console.log('📤 Realizando petición:', { 
+        url, 
+        method: requestOptions.method || 'GET', 
+        headers: requestOptions.headers,
+        body: requestOptions.body ? 'Con datos' : 'Sin datos'
+    });
     
     try {
         const response = await fetch(url, requestOptions);
         
-        console.log('📥 Respuesta recibida:', { status: response.status, ok: response.ok });
+        console.log('📥 Respuesta recibida:', { status: response.status, ok: response.ok, statusText: response.statusText });
         
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('❌ Error en respuesta:', errorText);
-            throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+            console.error('❌ Error en respuesta:', { status: response.status, text: errorText });
+            
+            let errorMessage;
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMessage = errorJson.error || errorJson.message || errorText;
+            } catch {
+                errorMessage = errorText;
+            }
+            
+            throw new Error(`HTTP error! ${response.status} - ${errorMessage}`);
         }
         
         const data = await response.json();
-        console.log('✅ Datos JSON:', data);
+        console.log('✅ Datos JSON recibidos:', data);
         return data;
     } catch (error) {
-        console.error('❌ API Request Error:', error);
+        console.error('❌ API Request Error:', {
+            message: error.message,
+            url,
+            method: requestOptions.method || 'GET'
+        });
         throw error;
     }
 }
@@ -76,10 +101,17 @@ async function iniciarSesion(username, password) {
             body: JSON.stringify({ username, password })
         });
         
+        console.log('📥 Respuesta completa del login:', response);
+        
         if (response.access_token) {
             authToken = response.access_token;
             localStorage.setItem('authToken', authToken);
-            console.log('Sesión iniciada exitosamente');
+            console.log('✅ Sesión iniciada exitosamente');
+            console.log('🔑 Token guardado:', authToken.substring(0, 20) + '...');
+        } else {
+            console.error('❌ No se recibió token en la respuesta');
+            console.error('📥 Estructura de respuesta recibida:', Object.keys(response));
+            throw new Error('No se recibió token de autenticación');
         }
         
         return response;
@@ -193,12 +225,29 @@ async function crearCategoria(nombreCategoria) {
     }
 }
 
+// === FUNCIONES DE USUARIOS ===
+
+// Obtener todos los usuarios
+async function obtenerUsuarios() {
+    try {
+        const usuarios = await apiRequest('/users', {
+            method: 'GET'
+        });
+        
+        console.log('Usuarios obtenidos:', usuarios);
+        return usuarios;
+    } catch (error) {
+        console.error('Error obteniendo usuarios:', error);
+        throw error;
+    }
+}
+
 // === FUNCIÓN DE PRUEBA DE CONEXIÓN ===
 
 // Verificar que la API está funcionando
 async function verificarConexionAPI() {
     try {
-        const response = await apiRequest('/api/health', {
+        const response = await apiRequest('/users', {
             method: 'GET'
         });
         
@@ -251,6 +300,7 @@ if (typeof module !== 'undefined' && module.exports) {
         eliminarProducto,
         obtenerCategorias,
         crearCategoria,
+        obtenerUsuarios,
         verificarConexionAPI
     };
 }

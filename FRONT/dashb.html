@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Usuarios</title>
+    <title>Dashboard - Productos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="frontend_integration.js"></script>
 </head>
@@ -13,164 +14,435 @@
 <!-- NAVBAR -->
 <nav class="navbar navbar-custom navbar-dark p-3">
     <div class="container-fluid">
-        <span class="navbar-brand mb-0 h1">Dashboard - Usuarios</span>
+        <span class="navbar-brand mb-0 h1"><i class="fas fa-box"></i> Dashboard - Productos</span>
+        <div class="d-flex">
+            <a href="index.html" class="btn btn-outline-light me-2">
+                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+            </a>
+        </div>
     </div>
 </nav>
 
 <div class="container mt-4">
 
+    <!-- ESTADÍSTICAS -->
+    <div class="row mb-4" id="statsContainer">
+        <div class="col-md-4">
+            <div class="stat-card bg-primary text-white">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-box fa-2x me-3"></i>
+                    <div>
+                        <h3 id="totalProductos">0</h3>
+                        <small>Total Productos</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card bg-success text-white">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-check-circle fa-2x me-3"></i>
+                    <div>
+                        <h3 id="totalCategorias">0</h3>
+                        <small>Categorías</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stat-card bg-info text-white">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-warehouse fa-2x me-3"></i>
+                    <div>
+                        <h3 id="inventarioTotal">0</h3>
+                        <small>Inventario Total</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- BOTÓN AGREGAR -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3 class="fw-bold">Usuarios</h3>
-        <button class="btn btn-main" onclick="mostrarFormulario()">Agregar Usuario</button>
+        <h3 class="fw-bold">Gestión de Productos</h3>
+        <button class="btn btn-main" onclick="mostrarFormulario()">
+            <i class="fas fa-plus"></i> Agregar Producto
+        </button>
     </div>
 
     <!-- FORMULARIO -->
     <div id="formProducto" class="card-producto mb-4 hidden">
-        <h4 id="formTitle">Agregar Usuario</h4>
-        <div class="mt-3">
-            <label class="form-label">Nombre del usuario</label>
-            <input id="prodNombre" class="form-control" type="text">
+        <h4 id="formTitle">Agregar Producto</h4>
+        <div class="row">
+            <div class="col-md-8">
+                <label class="form-label">Nombre del Producto</label>
+                <input id="prodNombre" class="form-control" type="text" placeholder="Ej: Laptop Dell Inspiron">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Inventario</label>
+                <input id="prodInventario" class="form-control" type="number" placeholder="10" min="0">
+            </div>
         </div>
-        <button class="btn btn-main mt-3" onclick="guardarProducto()">Guardar</button>
-        <button class="btn btn-secondary mt-3" onclick="cancelarForm()">Cancelar</button>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <label class="form-label">Categoría</label>
+                <select id="prodCategoria" class="form-control">
+                    <option value="">Cargando categorías...</option>
+                </select>
+            </div>
+        </div>
+        <div class="mt-3">
+            <button class="btn btn-main me-2" onclick="guardarProducto()">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <button class="btn btn-secondary" onclick="cancelarForm()">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+        </div>
     </div>
 
-    <!-- LISTA DE USUARIOS COMO TARJETAS -->
+    <!-- LISTA DE PRODUCTOS -->
     <div class="row" id="productosGrid">
-        <!-- Contenido dinámico -->
+        <div class="col-12 text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p>Cargando productos...</p>
+        </div>
     </div>
 
 </div>
 
+<!-- Modal para detalles -->
+<div class="modal fade" id="detallesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle"></i> Detalles del Producto
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     let productos = [];
+    let categorias = [];
     let editIndex = null;
+    let detallesModal = null;
 
-    // Cargar productos al iniciar
-    async function cargarProductos() {
+    // Inicializar cuando carga la página
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('🚀 Dashboard iniciando...');
+        detallesModal = new bootstrap.Modal(document.getElementById('detallesModal'));
+        
+        // Asegurarse de que el token se carga desde localStorage
+        if (!authToken) {
+            authToken = localStorage.getItem('authToken');
+        }
+        
+        // Verificar si hay token de sesión
+        if (!authToken) {
+            console.log('⚠️ No hay token de sesión, redirigiendo al login');
+            alert('Sesión expirada. Por favor inicia sesión nuevamente.');
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        console.log('✅ Token encontrado, cargando dashboard...');
+        await cargarDatos();
+    });
+
+    // Cargar todos los datos
+    async function cargarDatos() {
         try {
-            console.log('📦 Cargando productos...');
-            const productos_data = await obtenerProductos();
-            productos = productos_data.data || productos_data || [];
-            renderProductos();
-            console.log('✅ Productos cargados:', productos);
+            console.log('📦 Cargando datos...');
+            await Promise.all([
+                cargarProductos(),
+                cargarCategorias()
+            ]);
+            actualizarEstadisticas();
         } catch (error) {
-            console.error('❌ Error al cargar productos:', error);
-            // Si hay error de conexión, mostrar mensaje
-            if (!productos.length) {
-                document.getElementById("productosGrid").innerHTML = '<div class="col-12"><p class="text-danger">⚠️ No se puede conectar al servidor. Verifica que el backend esté corriendo en http://127.0.0.1:5000</p></div>';
-            }
+            console.error('❌ Error al cargar datos:', error);
         }
     }
 
+    // Cargar productos desde la API
+    async function cargarProductos() {
+        try {
+            console.log('📦 Cargando productos...');
+            const response = await obtenerProductos();
+            
+            // La API puede devolver diferentes estructuras
+            if (response && response.data) {
+                productos = response.data;
+            } else if (Array.isArray(response)) {
+                productos = response;
+            } else {
+                productos = [];
+            }
+            
+            console.log('✅ Productos cargados:', productos.length);
+            renderProductos();
+        } catch (error) {
+            console.error('❌ Error al cargar productos:', error);
+            document.getElementById("productosGrid").innerHTML = 
+                '<div class="col-12"><div class="alert alert-danger">⚠️ Error al cargar los productos. Verifica la conexión con el servidor.</div></div>';
+        }
+    }
+
+    // Cargar categorías desde la API
+    async function cargarCategorias() {
+        try {
+            console.log('📂 Cargando categorías...');
+            const response = await obtenerCategorias();
+            
+            if (response && response.data) {
+                categorias = response.data;
+            } else if (Array.isArray(response)) {
+                categorias = response;
+            } else {
+                categorias = [];
+            }
+            
+            console.log('✅ Categorías cargadas:', categorias.length);
+            renderSelectCategorias();
+        } catch (error) {
+            console.error('❌ Error al cargar categorías:', error);
+            categorias = [];
+            renderSelectCategorias();
+        }
+    }
+
+    // Renderizar select de categorías
+    function renderSelectCategorias() {
+        const select = document.getElementById("prodCategoria");
+        
+        if (!categorias || categorias.length === 0) {
+            select.innerHTML = '<option value="">No hay categorías disponibles</option>';
+            return;
+        }
+        
+        let html = '<option value="">Selecciona una categoría</option>';
+        categorias.forEach(cat => {
+            html += `<option value="${cat.id}">${cat.nombreCategoria}</option>`;
+        });
+        
+        select.innerHTML = html;
+    }
+
+    // Renderizar productos en la interfaz
     function renderProductos() {
         const grid = document.getElementById("productosGrid");
-        grid.innerHTML = "";
-
+        
         if (!productos || productos.length === 0) {
-            grid.innerHTML = '<div class="col-12"><p class="text-muted">No hay productos registrados</p></div>';
+            grid.innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle fa-3x mb-3"></i>
+                        <h4>No hay productos registrados</h4>
+                        <p>Comienza agregando tu primer producto usando el botón de arriba.</p>
+                    </div>
+                </div>
+            `;
             return;
         }
 
-        productos.forEach((p, i) => {
-            grid.innerHTML += `
+        let html = '';
+        productos.forEach((item, index) => {
+            const categoria = categorias.find(c => c.id === item.categoria_id);
+            const categoriaNombre = categoria ? categoria.nombreCategoria : 'Sin categoría';
+            
+            html += `
                 <div class="col-md-4 mb-4">
-                    <div class="card-producto">
-                        <h5>${p.nombre || 'Sin nombre'}</h5>
-                        <p class="text-muted small">Inventario: ${p.inventario || 0}</p>
-                        <div class="mt-3 d-flex gap-2">
-                            <button class='btn btn-warning btn-sm' onclick='editarProducto(${i})'>Editar</button>
-                            <button class='btn btn-danger btn-sm' onclick='eliminarProducto(${i})'>Eliminar</button>
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-box"></i></span>
+                            <span class="badge bg-light text-dark">${categoriaNombre}</span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">${item.nombre}</h5>
+                            <div class="mb-2">
+                                <strong>ID:</strong> #${item.id}<br>
+                                <strong>Inventario:</strong> ${item.inventario} unidades<br>
+                                <strong>Categoría:</strong> ${categoriaNombre}
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <div class="btn-group w-100" role="group">
+                                <button class="btn btn-outline-info btn-sm" onclick="verDetalles(${index})">
+                                    <i class="fas fa-eye"></i> Ver
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" onclick="editarProducto(${index})">
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm" onclick="eliminarProducto(${index})">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
         });
+        
+        grid.innerHTML = html;
     }
 
+    // Mostrar formulario para agregar
     function mostrarFormulario() {
         editIndex = null;
         document.getElementById("formTitle").innerText = "Agregar Producto";
-        document.getElementById("prodNombre").value = "";
+        limpiarFormulario();
         document.getElementById("formProducto").classList.remove("hidden");
     }
 
+    // Guardar producto (crear o actualizar)
     async function guardarProducto() {
-        const nombre = document.getElementById("prodNombre").value;
-        
-        if (!nombre.trim()) {
-            alert('Por favor ingresa un nombre');
+        const nombre = document.getElementById("prodNombre").value.trim();
+        const inventario = parseInt(document.getElementById("prodInventario").value);
+        const categoria_id = parseInt(document.getElementById("prodCategoria").value);
+
+        // Validaciones
+        if (!nombre) {
+            alert('Por favor ingresa el nombre del producto');
+            return;
+        }
+
+        if (isNaN(inventario) || inventario < 0) {
+            alert('Por favor ingresa un inventario válido');
+            return;
+        }
+
+        if (!categoria_id) {
+            alert('Por favor selecciona una categoría');
             return;
         }
 
         try {
             if (editIndex !== null) {
-                // Actualizar producto
-                const productoActual = productos[editIndex];
+                // Actualizar producto existente
+                const item = productos[editIndex];
                 const response = await actualizarProducto(
-                    productoActual.id,
-                    nombre,
-                    productoActual.inventario,
-                    productoActual.categoria_id
+                    item.id, nombre, inventario, categoria_id
                 );
                 alert('✅ Producto actualizado exitosamente');
-                console.log('Producto actualizado:', response);
+                console.log('Actualizado:', response);
             } else {
                 // Crear nuevo producto
-                const response = await crearProducto(nombre, 1, 1);
+                const response = await crearProducto(
+                    nombre, inventario, categoria_id
+                );
                 alert('✅ Producto creado exitosamente');
-                console.log('Producto creado:', response);
+                console.log('Creado:', response);
             }
 
             cancelarForm();
-            await cargarProductos(); // Recargar la lista
+            await cargarProductos();
         } catch (error) {
             console.error('Error:', error);
-            alert('❌ Error al guardar producto: ' + error.message);
+            alert('❌ Error al guardar: ' + error.message);
         }
     }
 
+    // Editar producto
     function editarProducto(index) {
+        const item = productos[index];
         editIndex = index;
+        
         document.getElementById("formTitle").innerText = "Editar Producto";
-        document.getElementById("prodNombre").value = productos[index].nombre;
+        document.getElementById("prodNombre").value = item.nombre || '';
+        document.getElementById("prodInventario").value = item.inventario || 0;
+        document.getElementById("prodCategoria").value = item.categoria_id || '';
+        
         document.getElementById("formProducto").classList.remove("hidden");
     }
 
+    // Eliminar producto
     async function eliminarProducto(index) {
-        const producto = productos[index];
-        if (!confirm(`¿Eliminar producto "${producto.nombre}"?`)) return;
+        const item = productos[index];
+        if (!confirm(`¿Estás seguro de eliminar "${item.nombre}"?`)) {
+            return;
+        }
         
         try {
-            const response = await eliminarProducto(producto.id);
+            // Usar la función del API correctamente
+            const response = await apiRequest(`/products/${item.id}`, {
+                method: 'DELETE'
+            });
             alert('✅ Producto eliminado exitosamente');
-            console.log('Producto eliminado:', response);
-            await cargarProductos(); // Recargar la lista
+            await cargarProductos();
         } catch (error) {
             console.error('Error:', error);
-            alert('❌ Error al eliminar producto: ' + error.message);
+            alert('❌ Error al eliminar: ' + error.message);
         }
     }
 
+    // Ver detalles en modal
+    function verDetalles(index) {
+        const item = productos[index];
+        const categoria = categorias.find(c => c.id === item.categoria_id);
+        const categoriaNombre = categoria ? categoria.nombreCategoria : 'Sin categoría';
+            
+        const modalBody = document.getElementById('modalBody');
+        modalBody.innerHTML = `
+            <div class="text-center mb-4">
+                <div style="font-size: 4rem; margin-bottom: 1rem;"><i class="fas fa-box text-primary"></i></div>
+                <h3>${item.nombre}</h3>
+                <p class="text-muted">ID: #${item.id}</p>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-info-circle"></i> Información General</h5>
+                    <table class="table table-borderless">
+                        <tr><td><strong>Nombre:</strong></td><td>${item.nombre}</td></tr>
+                        <tr><td><strong>ID:</strong></td><td>#${item.id}</td></tr>
+                        <tr><td><strong>Categoría:</strong></td><td>${categoriaNombre}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-warehouse"></i> Inventario</h5>
+                    <table class="table table-borderless">
+                        <tr><td><strong>Stock Actual:</strong></td><td class="text-success">${item.inventario} unidades</td></tr>
+                        <tr><td><strong>Estado:</strong></td><td>${item.inventario > 0 ? '<i class="fas fa-check text-success"></i> Disponible' : '<i class="fas fa-times text-danger"></i> Agotado'}</td></tr>
+                    </table>
+                </div>
+            </div>
+        `;
+        
+        detallesModal.show();
+    }
+
+    // Limpiar formulario
+    function limpiarFormulario() {
+        document.getElementById("prodNombre").value = '';
+        document.getElementById("prodInventario").value = '';
+        document.getElementById("prodCategoria").value = '';
+    }
+
+    // Cancelar formulario
     function cancelarForm() {
         document.getElementById("formProducto").classList.add("hidden");
-        document.getElementById("prodNombre").value = "";
+        limpiarFormulario();
         editIndex = null;
     }
 
-    // Verificar conexión y cargar productos al cargar la página
-    document.addEventListener('DOMContentLoaded', async function() {
-        console.log('🚀 Dashboard cargando...');
-        const conectado = await verificarConexionAPI();
-        if (conectado) {
-            console.log('✅ Conexión verificada');
-            await cargarProductos();
-        } else {
-            console.error('❌ No se pudo conectar a la API');
-            document.getElementById("productosGrid").innerHTML = '<div class="col-12"><p class="text-danger">⚠️ No se puede conectar al servidor. Verifica que el backend esté corriendo.</p></div>';
-        }
-    });
+    // Actualizar estadísticas
+    function actualizarEstadisticas() {
+        const totalProductos = productos.length;
+        const totalCategorias = categorias.length;
+        const inventarioTotal = productos.reduce((sum, item) => sum + (item.inventario || 0), 0);
+        
+        document.getElementById("totalProductos").textContent = totalProductos;
+        document.getElementById("totalCategorias").textContent = totalCategorias;
+        document.getElementById("inventarioTotal").textContent = inventarioTotal;
+    }
 </script>
 
 </body>

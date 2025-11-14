@@ -18,12 +18,12 @@
                 <h3 class="text-center mb-4">Ingreso</h3>
                 <form>
                     <div class="mb-3">
-                        <label class="form-label">Correo electrónico</label>
-                        <input type="email" class="form-control" placeholder="Ingresa tu correo">
+                        <label class="form-label">Usuario</label>
+                        <input type="text" class="form-control" placeholder="Ingresa tu usuario" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Contraseña</label>
-                        <input type="password" class="form-control" placeholder="Ingresa tu contraseña">
+                        <input type="password" class="form-control" placeholder="Ingresa tu contraseña" required>
                     </div>
                     <button class="btn btn-main w-100">Ingresar</button>
                 </form>
@@ -37,16 +37,12 @@
                 <h3 class="text-center mb-4">Registro</h3>
                 <form>
                     <div class="mb-3">
-                        <label class="form-label">Nombre</label>
-                        <input type="text" class="form-control" placeholder="Tu nombre">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Correo</label>
-                        <input type="email" class="form-control" placeholder="Tu correo">
+                        <label class="form-label">Usuario</label>
+                        <input type="text" class="form-control" placeholder="Tu usuario" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Contraseña</label>
-                        <input type="password" class="form-control" placeholder="Crea una contraseña">
+                        <input type="password" class="form-control" placeholder="Crea una contraseña" required>
                     </div>
                     <button class="btn btn-main w-100">Registrarse</button>
                 </form>
@@ -61,7 +57,7 @@
 
 <script>
     // URL del backend
-    const API_URL = "https://curly-parakeet-7v5v4q4x4pw2rgrj-5000.app.github.dev";
+    const API_URL = "https://apiflask-production.up.railway.app";
 
     function toggleForms() {
         document.getElementById("loginForm").classList.toggle("hidden");
@@ -76,7 +72,7 @@
         // Registro de usuario
         registroForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const username = this.querySelector('input[placeholder="Tu nombre"]').value;
+            const username = this.querySelector('input[placeholder="Tu usuario"]').value;
             const password = this.querySelector('input[placeholder="Crea una contraseña"]').value;
             
             try {
@@ -96,7 +92,7 @@
         // Login
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const username = this.querySelector('input[placeholder="Ingresa tu correo"]').value;
+            const username = this.querySelector('input[placeholder="Ingresa tu usuario"]').value;
             const password = this.querySelector('input[placeholder="Ingresa tu contraseña"]').value;
             
             try {
